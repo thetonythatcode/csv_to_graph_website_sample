@@ -20,20 +20,10 @@ function parseData(csvData) {
     return Papa.parse(csvData, {
         header: true, // Treat the first row as headers
         skipEmptyLines: true,
-        complete: function (results) {
-            // 'results.data' contains the parsed data as an array of objects
-            console.log(results.data);
-
-            // You can access individual rows and columns like this:
-            for (const row of results.data) {
-                console.log("Hour:", row["Hour"]);
-            }
-        },
     });
 }
 
 function categorizeData(parsedData) {
-    console.log(parsedData);
     const dataTable = [];
     const index = {};
     dataTable.push(["Hour", "Long", "Short"]);
@@ -70,8 +60,8 @@ function createGoogleChart(categorizedData) {
         const data = google.visualization.arrayToDataTable(categorizedData);
 
         // Set chart options
-        var options = {
-            height: 400,
+        const options = {
+            height: 500,
             colors: ["green", "red"],
             legend: { position: "top" },
             bar: { groupWidth: "75%" },
@@ -85,9 +75,29 @@ function createGoogleChart(categorizedData) {
         };
 
         // Instantiate and draw our chart, passing in some options.
-        var chart = new google.visualization.ColumnChart(
+        const chart = new google.visualization.ColumnChart(
             document.getElementById("chart_div")
         );
         chart.draw(data, options);
+
+        // Create and add the "Download PDF" button
+        const downloadButton = document.createElement("button");
+        downloadButton.textContent = "Download PDF";
+        downloadButton.addEventListener("click", () => generatePDF(chart));
+
+        // Add the button to the page
+        document.body.appendChild(downloadButton);
     }
+}
+
+async function generatePDF(chart) {
+    const pdf = new jsPDF();
+
+    const chartContainer = chart.getContainer();
+
+    const canvas = await html2canvas(chartContainer);
+
+    const imgData = canvas.toDataURL("image/jpeg", 1.0);
+    pdf.addImage(imgData, "JPEG", 10, 10, 200, 100); // You might need to adjust the positioning and dimensions
+    pdf.save("chart.pdf");
 }
